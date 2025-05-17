@@ -249,7 +249,22 @@ app.delete('/files/:filename', (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.json({ status: 'healthy' });
+    try {
+        // Check if uploads directory exists, create if it doesn't
+        const uploadDir = path.join(__dirname, '..', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+            logger.info('Created uploads directory for health check');
+        }
+        
+        res.status(200).json({ 
+            status: 'healthy',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        logger.error('Health check error:', error);
+        res.status(500).json({ status: 'unhealthy', error: error.message });
+    }
 });
 
 app.listen(port, () => {
